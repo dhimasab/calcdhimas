@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Perpetual Risk Calculator</title>
   <style>
     :root {
@@ -109,6 +110,26 @@
       padding: 6px 12px;
       border-radius: 5px;
       color: var(--text-color);
+    }
+
+    /* 🔄 Responsive untuk layar kecil */
+    @media (max-width: 480px) {
+      .button-container {
+        flex-direction: column;
+      }
+
+      .button-container button {
+        width: 100%;
+      }
+
+      body {
+        padding: 20px 12px;
+      }
+
+      input, select, button {
+        font-size: 14px;
+        padding: 8px;
+      }
     }
   </style>
 </head>
