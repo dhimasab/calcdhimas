@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Perpetual Risk Calculator</title>
+  <style>
+    :root {
+      --bg-color: #f8f9fa;
+      --text-color: #333;
+      --input-bg: #fff;
+      --border-color: #ccc;
+      --highlight: #007bff;
+    }
+
+    body.dark {
+      --bg-color: #121212;
+      --text-color: #eee;
+      --input-bg: #1f1f1f;
+      --border-color: #444;
+      --highlight: #66aaff;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg-color);
+      color: var(--text-color);
+      padding: 40px 20px;
+      max-width: 600px;
+      margin: auto;
+      transition: all 0.3s ease;
+    }
+
+    h2 {
+      text-align: center;
+    }
+
+    label {
+      font-weight: 500;
+      margin-top: 15px;
+      display: block;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      background: var(--input-bg);
+      color: var(--text-color);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+
+    .result {
+      margin-top: 25px;
+      background: var(--input-bg);
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      border-left: 5px solid var(--highlight);
+    }
+
+    .result p {
+      margin: 10px 0;
+      font-size: 16px;
+    }
+
+    .highlight {
+      font-size: 18px;
+      font-weight: bold;
+      color: var(--text-color);
+    }
+
+    button {
+      margin-top: 15px;
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      background-color: var(--highlight);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .button-container {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .button-container button {
+      width: 50%;
+    }
+
+    .theme-toggle {
+      margin-bottom: 20px;
+      text-align: right;
+    }
+
+    .theme-toggle button {
+      background: none;
+      border: 1px solid var(--border-color);
+      padding: 6px 12px;
+      border-radius: 5px;
+      color: var(--text-color);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="theme-toggle">
+    <button onclick="toggleTheme()">🌓 Toggle Theme</button>
+  </div>
+
+  <h2>Perpetual Risk Calculator</h2>
+
+  <label>Position</label>
+  <select id="position" onchange="calculate()">
+    <option value="long">Long</option>
+    <option value="short">Short</option>
+  </select>
+
+  <label>Entry Price (USDT)</label>
+  <input type="number" id="entry" step="0.01" placeholder="e.g. 97000" oninput="calculate()">
+
+  <label>Stop Loss Price (USDT)</label>
+  <input type="number" id="stoploss" step="0.01" placeholder="e.g. 95000" oninput="calculate()">
+
+  <label>Leverage (x)</label>
+  <input type="number" id="leverage" step="1" value="50" oninput="calculate()">
+
+  <label>Risk per Trade (USDT)</label>
+  <input type="number" id="risk" step="0.01" value="100" oninput="calculate()">
+
+  <label>Take Profit Price (USDT) <span style="font-size: 0.8em; color: #777;">(Optional)</span></label>
+  <input type="number" id="takeprofit" step="0.01" placeholder="e.g. 105000" oninput="calculate()">
+
+  <div class="result" id="result" style="display:none;">
+    <p class="highlight">Required Margin: <span id="margin"></span> USDT</p>
+    <p>Total Position Value: <span id="value"></span> USDT</p>
+    <div id="profit-result" style="display:none;">
+      <p class="highlight">Potential Profit: <span id="profit"></span> USDT</p>
+    </div>
+    <div class="button-container">
+      <button onclick="copyOnly('margin')">📋 Copy Margin</button>
+      <button onclick="copyOnly('value')">📋 Copy Value</button>
+    </div>
+  </div>
+
+  <script>
+    function calculate() {
+      const entry = parseFloat(document.getElementById('entry').value);
+      const stoploss = parseFloat(document.getElementById('stoploss').value);
+      const leverage = parseFloat(document.getElementById('leverage').value);
+      const position = document.getElementById('position').value;
+      const risk = parseFloat(document.getElementById('risk').value);
+      const takeProfit = parseFloat(document.getElementById('takeprofit').value);
+
+      if (!entry || !stoploss || !leverage || !risk || leverage <= 0) {
+        document.getElementById("result").style.display = "none";
+        return;
+      }
+
+      let riskPerUnit = position === "long" ? entry - stoploss : stoploss - entry;
+      if (riskPerUnit <= 0) {
+        document.getElementById("result").style.display = "none";
+        return;
+      }
+
+      const positionSize = risk / riskPerUnit;
+      const totalValue = positionSize * entry;
+      const margin = totalValue / leverage;
+
+      let potentialProfit = 0;
+      if (takeProfit) {
+        potentialProfit = position === "long"
+          ? (takeProfit - entry) * positionSize
+          : (entry - takeProfit) * positionSize;
+      }
+
+      document.getElementById("value").innerText = totalValue.toFixed(2);
+      document.getElementById("margin").innerText = margin.toFixed(2);
+      document.getElementById("result").style.display = "block";
+
+      if (takeProfit) {
+        document.getElementById("profit").innerText = potentialProfit.toFixed(2);
+        document.getElementById("profit-result").style.display = "block";
+      } else {
+        document.getElementById("profit-result").style.display = "none";
+      }
+    }
+
+    function copyOnly(id) {
+      const text = document.getElementById(id).innerText;
+      navigator.clipboard.writeText(text)
+        .then(() => alert(`${id.charAt(0).toUpperCase() + id.slice(1)} copied: ${text} USDT`))
+        .catch(err => alert("Failed to copy: " + err));
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle("dark");
+    }
+
+    window.onload = () => {
+      document.querySelectorAll('input, select').forEach(el => {
+        el.dispatchEvent(new Event('input'));
+      });
+    };
+  </script>
+
+</body>
+</html>
